@@ -7,30 +7,24 @@
 void PrintUsage() {
     std::cout << "usage: steganography CMD IN_IMG... OUT_IMG" << std::endl;
     std::cout << "\tCMD" << std::endl;
-    std::cout
-        << "\t\tOne of either 'merge' or 'unmerge'. The 'merge' command will "
-           "merge the\n\t\tsecond IN_IMG argument into the first IN_IMG "
-           "argument producing a new\n\t\tOUT_IMG. The 'unmerge' command will "
-           "extract an image to OUT_IMG previ-\n\t\tously embedded in the "
-           "IN_IMG argument."
-        << std::endl;
-    std::cout << "\tIN_IMG\n\t\tA JPEG or PNG image." << std::endl;
-    std::cout << "\tOUT_IMG\n\t\tA JPEG or PNG image containing the result of "
-                 "executing the parameter\n\t\tCMD."
+    std::cout << "\t\tone of 'merge', 'unmerge', or 'help'" << std::endl;
+    std::cout << "\tIN_IMG\n\t\ta jpeg or png image" << std::endl;
+    std::cout << "\tOUT_IMG\n\t\ta jpeg or png image containing the result of "
+                 "executing the parameter\n\t\tCMD"
               << std::endl;
     std::cout << "EXAMPLES" << std::endl;
     std::cout << "\tsteganography merge container.png secret.jpg out.png"
               << std::endl;
     std::cout << "\tsteganography unmerge out.png secret.jpg" << std::endl;
-    std::cout << "\n\tNOTE: The output of the merge command and input to the "
-                 "unmerge command will a-\n\tlways be a PNG."
+    std::cout << "NOTES" << std::endl;
+    std::cout << "\tThe output of the merge command and input to the unmerge "
+                 "command must\n\talways be a PNG!"
               << std::endl;
 }
 
 void PrintErrAndExit(const std::string& err) {
     std::cerr << "error: " << err << std::endl;
-    std::cout << std::endl;
-    PrintUsage();
+    std::cerr << "try 'steganography help' for more information" << std::endl;
     exit(EXIT_FAILURE);
 }
 
@@ -39,15 +33,15 @@ int main(int argc, char** argv) {
     const int kUnmergeCmdArgCount = 4;
     const std::string kMergeCmd("merge");
     const std::string kUnmergeCmd("unmerge");
+    const std::string kHelpCmd("help");
 
-    /* did the user give the right number args for a merge/unmerge command? */
-    if (argc < std::min(kMergeCmdArgCount, kUnmergeCmdArgCount)) {
-        PrintErrAndExit("invalid arg count");
+    if (argc < 2) { /* missing the program command arg */
+        PrintErrAndExit("missing command");
     }
 
     /* did the user specify a valid command? */
     std::string cmd(argv[1]);
-    if ((kMergeCmd != cmd) && (kUnmergeCmd != cmd)) {
+    if ((kMergeCmd != cmd) && (kUnmergeCmd != cmd) && (kHelpCmd != cmd)) {
         PrintErrAndExit("unknown CMD value");
     } else { /* we have a valid command but do we have the right arg count? */
         if ((kMergeCmd == cmd) && (kMergeCmdArgCount != argc)) {
@@ -61,8 +55,10 @@ int main(int argc, char** argv) {
     steganography::RetCode rc = steganography::RetCode::kSuccess;
     if (kMergeCmd == cmd) {
         rc = steganography::Merge(argv[2], argv[3], argv[4]);
-    } else {
+    } else if (kUnmergeCmd == cmd) {
         rc = steganography::Unmerge(argv[2], argv[3]);
+    } else if (kHelpCmd == cmd) {
+        PrintUsage();
     }
 
     /* report errors if there are any */
@@ -70,13 +66,13 @@ int main(int argc, char** argv) {
         case steganography::RetCode::kSuccess:
             break;
         case steganography::RetCode::kInvalidFileFormat:
-            PrintErrAndExit("invalid file format");
+            PrintErrAndExit("invalid format, only JPEG and PNG are accepted");
             break;
         case steganography::RetCode::kFileNotFound:
             PrintErrAndExit("one or more input files do not exist");
             break;
         case steganography::RetCode::kInvalidDimensions:
-            PrintErrAndExit("secret does not fit within cover image");
+            PrintErrAndExit("secret image does not fit inside cover image");
             break;
     }
     return 0;
