@@ -74,7 +74,8 @@ static boost::gil::rgb8_pixel_t MergePixels(
     const int kHighNibble = 0xF0;
     boost::gil::rgb8_pixel_t merge(0, 0, 0);
     for (int i = 0; i < 3; ++i) {
-        merge[i] = cover_pix[i] | ((secret_pix[i] & kHighNibble) >> 4);
+        merge[i] =
+            (cover_pix[i] & kHighNibble) | ((secret_pix[i] & kHighNibble) >> 4);
     }
     return merge;
 }
