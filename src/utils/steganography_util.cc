@@ -131,7 +131,7 @@ RetCode Merge(const std::string& cover, const std::string& secret,
         }
     }
 
-    WriteImage(output_img, outfile, cover_img_t);
+    WriteImage(output_img, outfile, ImageType::kPng);
 
     return RetCode::kSuccess;
 }
