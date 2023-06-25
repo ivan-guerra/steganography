@@ -6,6 +6,10 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE steganography.cc
 )
 
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE util
+)
+
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION ${STEG_BIN_DIR}
 )

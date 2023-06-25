@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 
+#include "utils/steganography_util.hpp"
+
 void PrintUsage() {
     std::cout << "usage: steganography CMD IN_IMG... OUT_IMG" << std::endl;
     std::cout << "\tCMD" << std::endl;
@@ -55,6 +57,27 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* TODO: Add logic to merge/unmerge image files. */
+    /* execute the merge/unmerge command */
+    steganography::RetCode rc = steganography::RetCode::kSuccess;
+    if (kMergeCmd == cmd) {
+        rc = steganography::Merge(argv[2], argv[3], argv[4]);
+    } else {
+        rc = steganography::Unmerge(argv[2], argv[3]);
+    }
+
+    /* report errors if there are any */
+    switch (rc) {
+        case steganography::RetCode::kSuccess:
+            break;
+        case steganography::RetCode::kInvalidFileFormat:
+            PrintErrAndExit("invalid file format");
+            break;
+        case steganography::RetCode::kFileNotFound:
+            PrintErrAndExit("one or more input files do not exist");
+            break;
+        case steganography::RetCode::kInvalidDimensions:
+            PrintErrAndExit("secret does not fit within cover image");
+            break;
+    }
     return 0;
 }
