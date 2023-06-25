@@ -74,22 +74,22 @@ static boost::gil::rgb8_pixel_t MergePixels(
     const boost::gil::rgb8_pixel_t& cover_pix,
     const boost::gil::rgb8_pixel_t& secret_pix) {
     const int kHighNibble = 0xF0;
-    boost::gil::rgb8_pixel_t merge(0, 0, 0);
+    boost::gil::rgb8_pixel_t merged_pix(0, 0, 0);
     for (int i = 0; i < 3; ++i) {
-        merge[i] =
+        merged_pix[i] =
             (cover_pix[i] & kHighNibble) | ((secret_pix[i] & kHighNibble) >> 4);
     }
-    return merge;
+    return merged_pix;
 }
 
 static boost::gil::rgb8_pixel_t UnmergePixels(
     const boost::gil::rgb8_pixel_t& pixel) {
     const int kLowNibble = 0x0F;
-    boost::gil::rgb8_pixel_t secret_pix(0, 0, 0);
+    boost::gil::rgb8_pixel_t unmerged_pix(0, 0, 0);
     for (int i = 0; i < 3; ++i) {
-        secret_pix[i] = (pixel[i] & kLowNibble) << 4;
+        unmerged_pix[i] = (pixel[i] & kLowNibble) << 4;
     }
-    return secret_pix;
+    return unmerged_pix;
 }
 
 static bool HasJpegExtension(const std::string& filename) {
@@ -142,6 +142,7 @@ RetCode Merge(const std::string& cover, const std::string& secret,
         }
     }
 
+    /* avoid loss of data by using a lossless image format in this case PNG */
     WriteImage(output_img, outfile, ImageType::kPng);
 
     return RetCode::kSuccess;
@@ -172,6 +173,7 @@ RetCode Unmerge(const std::string& secret, const std::string& outfile) {
         }
     }
 
+    /* write the image out using the user's preferred format (default PNG) */
     if (HasJpegExtension(outfile)) {
         WriteImage(output_img, outfile, ImageType::kJpeg);
     } else {
