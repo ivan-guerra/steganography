@@ -1,11 +1,13 @@
 #include "utils/steganography_util.hpp"
 
+#include <algorithm>
 #include <boost/gil.hpp>
 #include <boost/gil/extension/io/jpeg.hpp>
 #include <boost/gil/extension/io/png.hpp>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <string>
 #include <vector>
 
 namespace steganography {
@@ -90,6 +92,14 @@ static boost::gil::rgb8_pixel_t UnmergePixels(
     return secret_pix;
 }
 
+static bool HasJpegExtension(const std::string& filename) {
+    const std::vector<std::string> kExtensions = {".jpg", ".jpeg", ".JPG",
+                                                  ".JPEG"};
+    return std::any_of(
+        kExtensions.cbegin(), kExtensions.cend(),
+        [&filename](const std::string& s) { return filename.ends_with(s); });
+}
+
 RetCode Merge(const std::string& cover, const std::string& secret,
               const std::string& outfile) {
     /* verify the input image files exists */
@@ -162,7 +172,11 @@ RetCode Unmerge(const std::string& secret, const std::string& outfile) {
         }
     }
 
-    WriteImage(output_img, outfile, secret_img_t);
+    if (HasJpegExtension(outfile)) {
+        WriteImage(output_img, outfile, ImageType::kJpeg);
+    } else {
+        WriteImage(output_img, outfile, ImageType::kPng);
+    }
 
     return RetCode::kSuccess;
 }
