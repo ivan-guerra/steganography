@@ -79,6 +79,16 @@ static boost::gil::rgb8_pixel_t MergePixels(
     return merge;
 }
 
+static boost::gil::rgb8_pixel_t UnmergePixels(
+    const boost::gil::rgb8_pixel_t& pixel) {
+    const int kLowNibble = 0x0F;
+    boost::gil::rgb8_pixel_t secret_pix(0, 0, 0);
+    for (int i = 0; i < 3; ++i) {
+        secret_pix[i] = (pixel[i] & kLowNibble) << 4;
+    }
+    return secret_pix;
+}
+
 RetCode Merge(const std::string& cover, const std::string& secret,
               const std::string& outfile) {
     /* verify the input image files exists */
@@ -127,8 +137,32 @@ RetCode Merge(const std::string& cover, const std::string& secret,
 }
 
 RetCode Unmerge(const std::string& secret, const std::string& outfile) {
-    (void)secret;
-    (void)outfile;
+    /* verify the image containing the secret exists */
+    if (!std::filesystem::exists(secret)) {
+        return RetCode::kFileNotFound;
+    }
+
+    /* verify the input image has a valid file type */
+    ImageType secret_img_t(GetImageType(secret));
+    if (secret_img_t == ImageType::kUnknown) {
+        return RetCode::kInvalidFileFormat;
+    }
+
+    /* load images into GIL image type */
+    boost::gil::rgb8_image_t secret_img(ReadImage(secret, secret_img_t));
+    boost::gil::rgb8_image_t output_img = secret_img;
+
+    /* extract the hidden image into the output image */
+    auto secret_view = boost::gil::const_view(secret_img);
+    auto output_view = boost::gil::view(output_img);
+    for (int row = 0; row < output_view.height(); ++row) {
+        for (int col = 0; col < output_view.width(); ++col) {
+            output_view(col, row) = UnmergePixels(secret_view(col, row));
+        }
+    }
+
+    WriteImage(output_img, outfile, secret_img_t);
+
     return RetCode::kSuccess;
 }
 
