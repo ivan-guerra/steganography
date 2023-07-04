@@ -85,7 +85,7 @@ previously constructed using the `merge` command and the second argument is the
 desired name for the unmerged image:
 
 ```bash
-steganography merged.png unmerged.jpg
+steganography unmerge merged.png unmerged.jpg
 ```
 
 Only JPEG and PNG formats are supported as output formats.
