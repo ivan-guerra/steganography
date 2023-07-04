@@ -30,7 +30,7 @@ installed:
 * Boost version 1.76.0+
 
 To build the project, change directory to the `scripts/` directory and run
-`build.sh` (optionall pass the `-g` flag to build with debug symbols):
+`build.sh` (optionally pass the `-g` flag to build with debug symbols):
 
 ```bash
 ./build.sh
@@ -53,8 +53,8 @@ Included in the `scripts/` directory is the `container.sh` script which launches
 the steganography container with a host volume mounted. The host volume can
 contain images to be run against the tool. Just edit the `STEG_IMAGES` variable
 to the absolute path of the directory containing your images, then navigate to
-`/mnt/images` and run the tool as explained in the [Program
-Usage](#program-usage) section.
+`/mnt/images` within the container shell and run the tool as explained in the 
+[Program Usage](#program-usage) section.
 
 ### Program Usage
 
