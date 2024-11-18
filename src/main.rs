@@ -53,6 +53,10 @@ fn main() {
                 args.output_img.clone(),
                 args.merge_bits,
             );
+            if let Err(e) = steg::merge_images(&config) {
+                eprintln!("error: {}", e);
+                std::process::exit(1);
+            }
         }
         Commands::Unmerge(args) => {
             let config = steg::UnmergeConfig::new(
@@ -60,6 +64,10 @@ fn main() {
                 args.output_img.clone(),
                 args.merge_bits,
             );
+            if let Err(e) = steg::unmerge_images(&config) {
+                eprintln!("error: {}", e);
+                std::process::exit(1);
+            }
         }
     }
 }
