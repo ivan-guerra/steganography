@@ -15,7 +15,7 @@ enum Commands {
 }
 
 #[derive(Args)]
-#[command(about = "Merge a secret image into a container image")]
+#[command(about = "Merge a secret image into a container image.")]
 struct MergeArgs {
     #[arg(help = "container image path")]
     container_img: std::path::PathBuf,
@@ -26,12 +26,12 @@ struct MergeArgs {
     #[arg(help = "output image path")]
     output_img: std::path::PathBuf,
 
-    #[arg(help = "number of texture points")]
+    #[arg(help = "number of high bits to preserve in the container img")]
     merge_bits: u8,
 }
 
 #[derive(Args)]
-#[command(about = "Extract a hidden image from a container image")]
+#[command(about = "Extract a hidden image from a container image.")]
 struct UnmergeArgs {
     #[arg(help = "container image path")]
     merged_img: std::path::PathBuf,
@@ -39,7 +39,7 @@ struct UnmergeArgs {
     #[arg(help = "output image path")]
     output_img: std::path::PathBuf,
 
-    #[arg(help = "number of texture points")]
+    #[arg(help = "number of high bits preserved in the container image")]
     merge_bits: u8,
 }
 
