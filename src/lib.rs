@@ -1,7 +1,68 @@
+//! A steganography library for hiding images within other images.
+//!
+//! This library provides functionality to perform steganographic operations on images,
+//! allowing users to hide secret images within container images (also known as cover images)
+//! using bit manipulation techniques. The library supports both the process of hiding
+//! (merging) and recovering (unmerging) secret images.
+//!
+//! # Features
+//!
+//! * Hide one image inside another using configurable bit depth
+//! * Extract hidden images from steganographic images
+//! * Support for various image formats through the `image` crate
+//! * Automatic image resizing to match container dimensions
+//!
+//! # Examples
+//!
+//! ## Hiding an Image
+//!
+//! ```no_run
+//! use steg::{MergeConfig, merge_images};
+//! use std::path::PathBuf;
+//!
+//! let config = MergeConfig {
+//!     container_img: PathBuf::from("cover.png"),
+//!     secret_img: PathBuf::from("secret.png"),
+//!     output_img: PathBuf::from("merged.png"),
+//!     merge_bits: 4,
+//! };
+//!
+//! merge_images(&config).expect("Failed to merge images");
+//! ```
+//!
+//! ## Extracting a Hidden Image
+//!
+//! ```no_run
+//! use steg::{UnmergeConfig, unmerge_images};
+//! use std::path::PathBuf;
+//!
+//! let config = UnmergeConfig {
+//!     merged_img: PathBuf::from("merged.png"),
+//!     output_img: PathBuf::from("extracted.png"),
+//!     merge_bits: 4,
+//! };
+//!
+//! unmerge_images(&config).expect("Failed to extract secret image");
+//! ```
+//!
+//! # Technical Details
+//!
+//! The steganography process works by using the least significant bits of the container
+//! image to store the most significant bits of the secret image. The number of bits
+//! used is configurable, with more bits resulting in better quality of the hidden image
+//! but more visible artifacts in the container image.
+
+/// Configuration for merging a secret image into a container image.
 pub struct MergeConfig {
+    /// Path to the cover/container image that will hold the secret image.
     pub container_img: std::path::PathBuf,
+    /// Path to the secret image that will be hidden within the container image.
     pub secret_img: std::path::PathBuf,
+    /// Path where the resulting merged image will be saved.
+    /// The directory must exist and be writable.
     pub output_img: std::path::PathBuf,
+    /// Number of bits (1-8) to use from the container image for hiding the secret image.
+    /// Higher values mean more of the secret image will be visible in the container.
     pub merge_bits: u8,
 }
 
@@ -21,9 +82,16 @@ impl MergeConfig {
     }
 }
 
+/// Configuration for extracting a hidden image from a merged steganographic image.
 pub struct UnmergeConfig {
+    /// Path to the merged image that contains the hidden secret image.
+    /// This should be an image previously created by the merge operation.
     pub merged_img: std::path::PathBuf,
+    /// Path where the extracted secret image will be saved.
+    /// The directory must exist and be writable.
     pub output_img: std::path::PathBuf,
+    /// Number of bits (1-8) that were used to hide the secret image.
+    /// Must match the value used during the merge operation.
     pub merge_bits: u8,
 }
 
@@ -41,6 +109,11 @@ impl UnmergeConfig {
     }
 }
 
+/// Merges two RGB pixels using bit manipulation for steganography.
+///
+/// Takes a cover pixel and a secret pixel, and combines them by using the
+/// specified number of most significant bits from the cover pixel and storing
+/// the corresponding bits from the secret pixel in the least significant positions.
 fn merge_pixels(
     cover_pixel: image::Rgb<u8>,
     secret_pixel: image::Rgb<u8>,
@@ -57,6 +130,11 @@ fn merge_pixels(
     merged_pixel
 }
 
+/// Extracts a hidden pixel from a merged pixel using bit manipulation.
+///
+/// Takes a merged pixel and extracts the hidden information by shifting the
+/// least significant bits into the most significant positions, effectively
+/// recovering the secret pixel that was previously hidden.
 fn unmerge_pixels(merged_pixel: image::Rgb<u8>, merge_bits: u8) -> image::Rgb<u8> {
     let mut secret_pixel = image::Rgb([0, 0, 0]);
     for i in 0..3 {
@@ -67,6 +145,46 @@ fn unmerge_pixels(merged_pixel: image::Rgb<u8>, merge_bits: u8) -> image::Rgb<u8
     secret_pixel
 }
 
+/// Merges two images using steganography, hiding the secret image within the container image.
+///
+/// This function takes a container image and a secret image, and combines them by using
+/// the specified number of bits from each image. The secret image is resized to match
+/// the dimensions of the container image before merging.
+///
+/// # Arguments
+///
+/// * `config` - Configuration struct containing paths and merge parameters
+///
+/// # Returns
+///
+/// * `Ok(())` if the merge operation was successful
+/// * `Err(Box<dyn std::error::Error>)` if any error occurred during the process
+///
+/// # Examples
+///
+/// ```no_run
+/// use steg::{MergeConfig, merge_images};
+/// use std::path::PathBuf;
+///
+/// let config = MergeConfig {
+///     container_img: PathBuf::from("cover.png"),
+///     secret_img: PathBuf::from("secret.png"),
+///     output_img: PathBuf::from("output.png"),
+///     merge_bits: 4,
+/// };
+///
+/// match merge_images(&config) {
+///     Ok(()) => println!("Images merged successfully"),
+///     Err(e) => eprintln!("Error merging images: {}", e),
+/// }
+/// ```
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// * Either input file cannot be opened or read
+/// * The output file cannot be created or written
+/// * Image processing operations fail
 pub fn merge_images(config: &MergeConfig) -> Result<(), Box<dyn std::error::Error>> {
     let cover_img = image::open(&config.container_img)?;
     let secret_img = image::open(&config.secret_img)?;
@@ -97,6 +215,46 @@ pub fn merge_images(config: &MergeConfig) -> Result<(), Box<dyn std::error::Erro
     Ok(())
 }
 
+/// Extracts a hidden image from a steganographic merged image.
+///
+/// This function takes a merged image that was previously created using steganography
+/// and extracts the hidden secret image by examining the specified number of bits
+/// in each pixel.
+///
+/// # Arguments
+///
+/// * `config` - Configuration struct containing the merged image path, output path,
+///             and the number of bits used in the merge operation
+///
+/// # Returns
+///
+/// * `Ok(())` if the extraction was successful
+/// * `Err(Box<dyn std::error::Error>)` if any error occurred during the process
+///
+/// # Examples
+///
+/// ```no_run
+/// use steg::{UnmergeConfig, unmerge_images};
+/// use std::path::PathBuf;
+///
+/// let config = UnmergeConfig {
+///     merged_img: PathBuf::from("merged.png"),
+///     output_img: PathBuf::from("secret.png"),
+///     merge_bits: 4,
+/// };
+///
+/// match unmerge_images(&config) {
+///     Ok(()) => println!("Secret image extracted successfully"),
+///     Err(e) => eprintln!("Error extracting secret image: {}", e),
+/// }
+/// ```
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// * The merged image file cannot be opened or read
+/// * The output file cannot be created or written
+/// * Image processing operations fail
 pub fn unmerge_images(config: &UnmergeConfig) -> Result<(), Box<dyn std::error::Error>> {
     let merged_img = image::open(&config.merged_img)?;
     let merged_img = merged_img.to_rgb8();
